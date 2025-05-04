@@ -75,3 +75,112 @@ Para decodificar la `flag` utilicé el mismo código `java` mostrado en el ejerc
 ![image](funcionparametro.png)
 
 Output: --> `Decoded Flag: UVT{Wh4t?!_D1d_Y0u_r3aLly_c4TcH_1t?}`
+
+
+## Dark Web Stories
+
+### Categoría: 
+`Forense` `esteganografia`
+### Herramientas usadas: 
+`Wireshark``
+
+En este reto teníamos que analizar un archivo `.pcap`. Siguiendo la secuencia `TCP` pude ver que lo que estaba pasando era que alguien estaba intentando accedes a un dominio `.onion` con credenciales comunes e incluso con algunas inyecciones. Luego pudee ver que pudieron entrar con estas credenciales `username=admin&password=%27+or+1%3D1--+-` ya que se recibía el `200 OK` y mostraba los siguiente que me parecía sospechoso.
+
+![image](secretdata.png)
+
+Seguí avanzando en la secuencia del protocolo `TCP` y encontré una una conversación entre el usuario `R1kS` y `Charon VI`:
+
+- R1kS: Yo, are you here? Got something for you.
+- Charon VI: Hey, what's up?
+- R1kS: Was crawling on their website, 68b36d42880c527fb70086b1b97f4f34e49bc0d538f52607ec4009c552c2a63b.onion, or BlackVault as they call it. Managed to retrieve their sensitive documents, but somehow it's password protected and i cannot crack it using my regular tools.
+- Charon VI: Great job. Thought since the begining that they encrypt their files in case of a breakout.
+- Charon VI: Luckily, more or less, they were holding some of their passowrds in a database located on another server. Glad I was able to find it.
+- R1kS: That's very good. So, will you give me the password for this secret archive?
+- Charon VI: I will, but something is not right. There are multiple strings, and I don't understand what to do with them. Maybe you can find out.
+- R1kS: Sure. Drop 'em here. Those guys will finally learn Dark Web is not for everyone. They will not even know what struck them.
+- Charon VI: I will drop 'em one by one.
+- Charon VI: 5dbc98dcc983a70728bd082d1a47546e
+- Charon VI: f72c915d8f575a5c0999b5f37b6d99b7
+- ... y envía 18 más
+
+Con esto supuse que era la clave para algún archivo, y lo relacioné con el archivo `SecretData.zip` (que se ve en la imagen anterior) que pudo haber descargado la persona que previamente habíamos visto que pudo entrar credenciales falsas.
+
+Entonces ejecuté este comando `tshark -r conversation_dump.pcap --export-objects http,exported_files/` para guardar en una carpeta todos los objetos `HTTP` descargandos esperando que ahí estuviera el `SecretData.zip`. Efectivamente si estaba pero pedía una contraseña, pero para eso usé las claves que el usuario `Charon VI` le proporcionó a `RikS`. 
+
+Estas "claves" eran unos `hashes`, intenté ponerlos uno por uno y no me daban, los puse juntos y tampoco, entonces lo que hice fue ver que `string` me generaban y vi que me iban dando parte de un string, entonces hice este pequeño código en python para ver que me podrían dar.
+
+<pre>
+    import hashlib
+import string
+
+hashes = [
+    "5dbc98dcc983a70728bd082d1a47546e",
+    "f72c915d8f575a5c0999b5f37b6d99b7",
+    "a20bba554bfa1580a9d4aa2b6879ed46",
+    "02beeea47ee3cfe212e6bd843b9ce7d3",
+    "3112c7a8b6cd1677db0e3173e140fc05",
+    "50f4646135205fd4a5417e460cf71d3c",
+    "eb22cfa0890a2df3177966854a7176bc",
+    "845f49aa19c955b849d57593bf09d224",
+    "87f63931da79aa969ac4a776ce6cfb03",
+    "9793d9d6041c80f46ad7c1f530c8bbf8",
+    "2f88d89a8f50426a6285449be3286708",
+    "61bd22f017588208a0cacdf9a1a7ca1e",
+    "a7623c8b76316e10538782371b709415",
+    "c6cca42180caba17e9e6882dc66cc6ee",
+    "7c854900e46ebc5ee5680032b3e334de",
+    "ac81882b848b7673d73777ca22908c0d",
+    "4ce97d67963edca55cdd21d46a68f5bb",
+    "4abb62a00bccb775321f2720f2c7750b",
+    "67e00e8ef738fe75afdb42b22e50371e",
+    "b561052e5697ee5f1491b5e350fb78e1",
+]
+
+charset = string.ascii_letters + string.digits + string.punctuation
+current = ""
+
+for target_hash in hashes:
+    found = False
+    for char in charset:
+        attempt = current + char
+        if hashlib.md5(attempt.encode()).hexdigest() == target_hash:
+            current = attempt
+            print(f"[+] Found: {current}")
+            found = True
+            break
+    if not found:
+        print(f"[-] Could not find match for hash: {target_hash}")
+        break
+
+print("\nPossible final password:", current)
+</pre>
+
+Output
+<pre>
+   [+] Found: S
+[+] Found: Su
+[+] Found: Sup
+[+] Found: Sup3
+[+] Found: Sup3r
+[+] Found: Sup3r$
+[+] Found: Sup3r$3
+[+] Found: Sup3r$3c
+[+] Found: Sup3r$3cr
+[+] Found: Sup3r$3cre
+[+] Found: Sup3r$3cre7
+[+] Found: Sup3r$3cre7P
+[+] Found: Sup3r$3cre7P4
+[+] Found: Sup3r$3cre7P4$
+[+] Found: Sup3r$3cre7P4$S
+[+] Found: Sup3r$3cre7P4$Sw
+[+] Found: Sup3r$3cre7P4$Sw0
+[+] Found: Sup3r$3cre7P4$Sw0r
+[+] Found: Sup3r$3cre7P4$Sw0rd
+[+] Found: Sup3r$3cre7P4$Sw0rd!
+
+Possible final password: Sup3r$3cre7P4$Sw0rd! 
+</pre>
+
+Con esa contraseña pude descomprimir el arlchivo .zip, pero adentro había una imagen `.png`. Esta imagen la analicé con `zsteg` y enconté la flag.
+
+![image](zsteg.png)
