@@ -69,3 +69,4 @@ Para decodificar la `flag` utilicé el mismo código pero simplemente cambié lo
 
 ![image](funcionparametro.png)
 
+Output: --> `Decoded Flag: UVT{Wh4t?!_D1d_Y0u_r3aLly_c4TcH_1t?}`
