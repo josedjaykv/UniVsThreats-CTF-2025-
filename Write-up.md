@@ -184,3 +184,69 @@ Possible final password: Sup3r$3cre7P4$Sw0rd!
 Con esa contraseña pude descomprimir el arlchivo .zip, pero adentro había una imagen `.png`. Esta imagen la analicé con `zsteg` y enconté la flag.
 
 ![image](zsteg.png)
+
+
+## Shuffling
+
+### Categoría: 
+`Criptografía`
+
+En este reto nos daban esta conexión `nc 91.99.1.179 60000` que nos daba un hexadecimal y nos daban el archivo `source.py`. Lo que hice fue hacer un archivo de python donde se hciera el proceso inverso en un delta de tiempo de 1 hora para poder encontrar la semilla del aleatorio.
+
+Mi código de python
+<pre>
+    import time
+import random
+from datetime import datetime
+
+target_hex = "59a9217ebd972fe26c45881354abb3b26d20e2acc58a2fd89b99a8295737f093"
+target_ct = bytes.fromhex(target_hex)
+
+P = [15, 6, 19, 20, 28, 11, 27, 16, 0, 14, 22, 25,
+     4, 17, 30, 9, 1, 7, 23, 13, 31, 26, 2, 8, 18,
+     12, 29, 5, 21, 10, 3, 24]
+
+def unshuffle(l):
+    unshuffled = [0] * 32
+    for i, p in enumerate(P):
+        unshuffled[p] = l[i]
+    return unshuffled
+
+def decrypt_ct():
+    now = int(time.time())
+    print("[*] Probando timestamps desde ahora hasta hace 1 hora...")
+
+    for delta in range(3600):  # hasta 1 hora hacia atrás
+        ts = now - delta
+        random.seed(ts)
+        padded = [random.randint(32, 125) for _ in range(32)]
+        shuffled = [padded[p] for p in P]
+
+        random.seed(sum(shuffled))
+        key = random.randbytes(32)
+
+        decrypted = [x ^ y for x, y in zip(target_ct, key)]
+        unshuffled = unshuffle(decrypted)
+
+        try:
+            text = "".join(chr(c) for c in unshuffled)
+            if text.startswith("UVT{"):
+                print(f"[+] Posible flag encontrada:")
+                print(f"    Timestamp: {ts} -> {datetime.fromtimestamp(ts)}")
+                print(f"    Flag?: {text}")
+                return
+        except:
+            continue
+
+    print("[-] No se encontró ninguna flag que empiece por UVT{ en 1h.")
+
+decrypt_ct()
+</pre>
+
+Output
+<pre>
+    [*] Probando timestamps desde ahora hasta hace 1 hora...
+    [+] Posible flag encontrada:
+    Timestamp: 1746285233 -> 2025-05-03 10:13:53
+    Flag?: UVT{1_l1ke_t0_m0v3_1t_m0v3_i7}s3
+</pre>
