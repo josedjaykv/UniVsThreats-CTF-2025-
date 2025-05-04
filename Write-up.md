@@ -27,4 +27,31 @@ Función `fglthsjkmfgdhlkmlmerth()`:
 ![image](funcion.png)
 
 Función `fglthsjkmfgdhlkmlmerth()` modificada para solo extraer la flag decodificada:
-<pre> ```java public class HolaMundo { public static void main(String[] args) { System.out.println("¡Hola, mundo!"); } } ``` </pre>
+<pre> 
+public class FlagDecoder {
+
+    // La cadena codificada
+    private String encodedFlag = "Z[Y`Q55pxdq6P8dYm8w8d|8W8dR5w8dh56S:b";
+
+    // Decodificar la flag
+    public String decodeFlag() {
+        StringBuilder decodedFlag = new StringBuilder(encodedFlag.length());
+        
+        // Recorrer cada caracter de la cadena codificada y restarle 5
+        for (int i = 0; i < encodedFlag.length(); i++) {
+            // Convertir el resultado de la resta a char
+            char value = (char) (encodedFlag.charAt(i) - 5);
+            decodedFlag.append(value);
+        }
+        
+        // Retornar la flag decodificada
+        return decodedFlag.toString();
+    }
+
+    public static void main(String[] args) {
+        FlagDecoder decoder = new FlagDecoder();
+        String flag = decoder.decodeFlag();
+        System.out.println("Decoded Flag: " + flag);  // Imprime la flag decodificada
+    }
+}  
+</pre>
