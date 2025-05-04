@@ -55,3 +55,5 @@ public class FlagDecoder {
     }
 }  
 </pre>
+
+Output --> `Decoded Flag: UVT{L00ks_l1K3_Th3r3_w3R3_M0r3_c01N5}`
