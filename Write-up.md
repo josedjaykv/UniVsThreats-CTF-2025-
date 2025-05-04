@@ -56,4 +56,16 @@ public class FlagDecoder {
 }  
 </pre>
 
+Lo que se le pasaba a la fucnión `fglthsjkmfgdhlkmlmerth()` estaba más abajo en la clase. En el proximo reto que es similar voy a mostrar donde se encontraba.
+
 Output --> `Decoded Flag: UVT{L00ks_l1K3_Th3r3_w3R3_M0r3_c01N5}`
+
+
+## Insert Coin to Play – Part 2
+
+Al ejecutar el juego de este reto vi que también tenía una dinámica que imposibilitaba obtener las 10 monetas. Entonces busqué directamente a la función `AddScore` y vi que era similar, también llamba a la función `fglthsjkmfgdhlkmlmerth()`. Como vi que era tan parecido hice lo mismo con la anterior.
+
+Para decodificar la `flag` utilicé el mismo código pero simplemente cambié lo que recibía la función `fglthsjkmfgdhlkmlmerth()`.
+
+![image](funcionparametro.png)
+
